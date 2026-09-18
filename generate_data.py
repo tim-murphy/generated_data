@@ -30,6 +30,10 @@ if __name__ == '__main__':
                         help="Standard deviation of variance between repeats")
     parser.add_argument("--measures", type=int, default=1,
                         help="Number of measures for each measurement event (default 1)")
+    parser.add_argument("--ceiling", type=float, required=False,
+                        help="If set, will not generate values greater than this number")
+    parser.add_argument("--floor", type=float, required=False,
+                        help="If set, will not generate values less than this number")
     args = parser.parse_args()
 
     # Validate command-line arguments.
@@ -40,6 +44,10 @@ if __name__ == '__main__':
     if num_steps % 1.0 != 0.0:
         raise ValueError("Step size does not fit evenly between min and max!")
     num_steps = int(num_steps) + 1
+
+    if args.floor is not None and args.ceiling is not None:
+        if args.floor > args.ceiling:
+            raise ValueError("Ceiling value cannot be less than floor value")
 
     # Generate the values.
     calc_fn = sympy.lambdify(sympy.symbols('x'),
@@ -59,6 +67,11 @@ if __name__ == '__main__':
 
                 if args.round is not None:
                     y_val = round(y_val / args.round) * args.round
+
+                if args.floor is not None and y_val < args.floor:
+                    y_val = args.floor
+                elif args.ceiling is not None and y_val > args.ceiling:
+                    y_val = args.ceiling
 
                 y_vals.append(y_val)
 
